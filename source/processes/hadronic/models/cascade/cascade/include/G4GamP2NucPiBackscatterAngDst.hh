@@ -23,21 +23,24 @@
 // * acceptance of all terms of the Geant4 Software license.          *
 // ********************************************************************
 //
-// $Id: G4CascadeGamNChannel.hh 67796 2013-03-08 06:18:39Z mkelsey $
-// GEANT4 tag: $Name: not supported by cvs2svn $
+// $Id: G4GamP2NucPiBackscatterAngDst.hh $
+// Author:  Natalia Toro (SLAC)
+// Date:    20 Jun 2018
+//
+// Description: class containing numerically integrated angular distributions
+//              in the CM for the gamma p -> p pi0 backscatter reaction
+//              See notes in .cc about assumptions made here. 
 
-#ifndef G4_CASCADE_GAMN_CHANNEL_HH
-#define G4_CASCADE_GAMN_CHANNEL_HH
+#ifndef G4GamP2NucPiBackscatterAngDst_h
+#define G4GamP2NucPiBackscatterAngDst_h 1
 
-#include "G4CascadeData.hh"
-#include "G4CascadeFunctions.hh"
-#include "G4PionNucSampler.hh"
+#include "G4NumIntTwoBodyAngDst.hh"
 
-struct G4CascadeGamNChannelData {
-  typedef G4CascadeData<30,8,6,4,5,6,7,7,7> data_t;
-  static const data_t data;
+
+class G4GamP2NucPiBackscatterAngDst : public G4NumIntTwoBodyAngDst<7,14> {
+public:
+  G4GamP2NucPiBackscatterAngDst(G4int verbose = 0);
+  virtual ~G4GamP2NucPiBackscatterAngDst() {;}
 };
 
-typedef G4CascadeFunctions<G4CascadeGamNChannelData,G4PionNucSampler> G4CascadeGamNChannel;
-
-#endif	/* G4_CASCADE_GAMN_CHANNEL_HH */
+#endif

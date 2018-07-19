@@ -61,7 +61,7 @@
 #include <cmath>
 
 using namespace G4InuclSpecialFunctions;
-
+using namespace G4InuclParticleNames;
 
 // Cut-offs and iteration limits for generation
 
@@ -101,13 +101,15 @@ Configure(G4InuclElementaryParticle* bullet,
   G4int is = bullet->type() * target->type();
   G4int fs = (multiplicity==2) ? particle_kinds[0]*particle_kinds[1] : 0;
 
+  // Save particle types for use with distributions //nt: move this earlier so
+  // ChooseGenerators can access 2-body final state order
+  kinds = particle_kinds;
+
   ChooseGenerators(is, fs);
 
   // Save kinematics for use with distributions
   SaveKinematics(bullet, target);
 
-  // Save particle types for use with distributions
-  kinds = particle_kinds;
 }
 
 // Save kinematics for use with generators
@@ -145,6 +147,18 @@ void G4CascadeFinalStateAlgorithm::ChooseGenerators(G4int is, G4int fs) {
 
   if (fs > 0 && multiplicity == 2) {
     G4int kw = (fs==is) ? 1 : 2;
+
+    if(GetVerboseLevel()>1)
+      G4cout << " kinds.size() " << kinds.size() << G4endl;
+
+    if((is == gam*pro || is == gam*neu) &&
+       (kinds[0]==pro || kinds[0]==neu) && 
+       (kinds[1]==pip || kinds[1]==pim || kinds[1]==pi0))
+      kw = -1;   // NT: backscatter case
+
+    if(GetVerboseLevel()>1)
+      G4cout << " kw = " << kw << G4endl;
+
     angDist = G4TwoBodyAngularDist::GetDist(is, fs, kw);
   } else if (multiplicity == 3) {
     angDist = G4TwoBodyAngularDist::GetDist(is);
@@ -283,9 +297,12 @@ FillMagnitudes(G4double initialMass, const std::vector<G4double>& masses) {
   }	// while (itry < itry_max)
 
   if (itry >= itry_max) {		// Too many attempts
-    if (GetVerboseLevel() > 2)
+    if (GetVerboseLevel() > 2) {
       G4cerr << " Unable to generate momenta for multiplicity "
 	     << multiplicity << G4endl;
+      G4cout << " Unable to generate momenta for multiplicity "
+	     << multiplicity << G4endl;
+    }
 
     modules.clear();		// Something went wrong, throw away partial
   }
