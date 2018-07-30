@@ -40,6 +40,7 @@
 
 #include "globals.hh"
 #include <iosfwd>
+#include "G4CascadParticle.hh"
 
 class G4CascadeParamMessenger;
 
@@ -76,6 +77,8 @@ public:
   static G4double dpMaxAlpha()   { return Instance()->DPMAX_ALPHA; }
 
   static void DumpConfiguration(std::ostream& os) { Instance()->DumpConfig(os); }
+
+  static std::vector<G4CascadParticle> getCascadeParticles() { return Instance()->c_part; }
 
 private:	// Environment variable values, null pointers mean not set
   const char* G4CASCADE_VERBOSE;
@@ -125,6 +128,8 @@ private:	// Environment variable values, null pointers mean not set
   G4double DPMAX_DOUBLET;	// Final-state clustering cuts
   G4double DPMAX_TRIPLET;
   G4double DPMAX_ALPHA;
+
+  std::vector<G4CascadParticle> c_part; 
 
 private:	// Singleton -- no public constructor
   G4CascadeParameters();
