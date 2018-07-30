@@ -401,6 +401,24 @@ void G4IntraNucleiCascader::generateCascade() {
     if (theCascadeHistory && new_cascad_particles.size()>1) 
       theCascadeHistory->AddVertex(cascad_particles.back(), new_cascad_particles);
 
+    // If this is the first iteration in the cascade and the incident particle
+    // is a photon, save all secondaries so they are accessible later if 
+    // desired.  For now, the list exist inside G4CascadeParameters.  At some
+    // point, a container derived from G4VUserEventInformation should be used
+    // instead. 
+    if ((iloop == 1) && cascad_particles.back().getParticle().isPhoton()) {
+
+        // Get the container used to store the particles and clear all old 
+        // secondaries before adding new ones.
+        std::vector<G4CascadParticle> c_parts = G4CascadeParameters::getCascadeParticles(); 
+        c_parts.clear(); 
+
+        c_parts.insert(c_parts.end(), new_cascad_particles.begin(), new_cascad_particles.end());
+        if (verboseLevel > 2) { 
+            G4cout << c_parts.size() << " photon secondaries were added to list. " << G4endl;
+        }
+    }
+
     if (verboseLevel > 2) {
       G4cout << " After generate fate: New particles "
 	     << new_cascad_particles.size() << G4endl
