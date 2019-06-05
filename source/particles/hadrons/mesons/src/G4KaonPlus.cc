@@ -70,31 +70,33 @@ G4KaonPlus* G4KaonPlus::Definition()
   //             stable         lifetime    decay table
   //             shortlived      subType    anti_encoding
 
+    //NT: reduce lifetime by factor of 50 to enhance short decay in flight
    anInstance = new G4ParticleDefinition(
                  name,    0.493677*GeV, 5.317e-14*MeV,    +1.*eplus,
                     0,              -1,             0,
                     1,              +1,             0,
               "meson",               0,             0,         321,
-                false,       12.380*ns,          NULL,
+                false,       12.380*ns/50,          NULL,
                 false,       "kaon");
 
  //create Decay Table
   G4DecayTable* table = new G4DecayTable();
 
  // create decay channels
+  //NT : Scaling up leptonic modes to 100%
   G4VDecayChannel** mode = new G4VDecayChannel*[6];
   // kaon+ -> mu+ + nu_mu
-  mode[0] = new G4PhaseSpaceDecayChannel("kaon+",0.6355,2,"mu+","nu_mu");
+  mode[0] = new G4PhaseSpaceDecayChannel("kaon+",0.8831,2,"mu+","nu_mu");
   // kaon+ -> pi+ + pi0
-  mode[1] = new G4PhaseSpaceDecayChannel("kaon+",0.2066,2,"pi+","pi0");
+  mode[1] = new G4PhaseSpaceDecayChannel("kaon+",0.,2,"pi+","pi0");
   // kaon+ -> pi+ + pi+ + pi-
-  mode[2] = new G4PhaseSpaceDecayChannel("kaon+",0.0559,3,"pi+","pi+","pi-");
+  mode[2] = new G4PhaseSpaceDecayChannel("kaon+",0.,3,"pi+","pi+","pi-");
   // kaon+ -> pi+ + pi0 + pi0
-  mode[3] = new G4PhaseSpaceDecayChannel("kaon+",0.01761,3,"pi+","pi0","pi0");
+  mode[3] = new G4PhaseSpaceDecayChannel("kaon+",0.,3,"pi+","pi0","pi0");
   // kaon+ -> pi0 + e+ + nu_e (Ke3)
-  mode[4] = new G4KL3DecayChannel("kaon+",0.0507,"pi0","e+","nu_e");
+  mode[4] = new G4KL3DecayChannel("kaon+",0.0704,"pi0","e+","nu_e");
   // kaon+ -> pi0 + mu+ + nu_mu (Kmu3)
-  mode[5] = new G4KL3DecayChannel("kaon+",0.0335,"pi0","mu+","nu_mu");
+  mode[5] = new G4KL3DecayChannel("kaon+",0.0465,"pi0","mu+","nu_mu");
 
   for (G4int index=0; index <6; index++ ) table->Insert(mode[index]);
   delete [] mode;
