@@ -42,7 +42,38 @@
 #include "G4InuclParticleNames.hh"
 using namespace G4InuclParticleNames;
 
+/* * * * * * ** * * * * * * ** * * * * * * ** * * * * * * ** * * * * * * ** * * * * * * ** 
+Note that Bertini obtains cross-sections by interpolating data at the following energies:
+
+static const G4double bins[30] = {
+  0.0,  0.01, 0.013, 0.018, 0.024, 0.032, 0.042, 0.056, 0.075, 0.1,
+  0.13, 0.18, 0.24,  0.32,  0.42,  0.56,  0.75,  1.0,   1.3,   1.8,
+  2.4,  3.2,  4.2,   5.6,   7.5,   10.0,  13.0,  18.0,  24.0, 32.0 };
+}
+
+This code up-scales Kaon production processes at energies of 2.4 to 10 GeV; photons with energies between 1.8 and 2.4 GeV, or between 10 and 13 GeV, will receive a partial (reduced) upscaling.
+
+note also that 2-body processes have zero input cross-section above 7.5 GeV -- NOT ACCEPTABLE
+MODEL FOR 8 GEV STUDIES. -NT
+* * * * * * ** * * * * * * ** * * * * * * ** * * * * * * ** * * * * * * ** * * * * * * **/
+
 namespace {
+
+
+  // Can safely bias 2- and 3-body simultaneously by ~60
+  // or 2-body only by ~70.  At higher biases, interpolation 
+  // artifacts lead to sizable energy-dependence in actual bias.
+  // For 4 GeV beam, could do 2-body biasing up to ~100. 
+  static const G4double upK2f = 60.; 
+  static const G4double upK3f = 60.; 
+                                  
+  static const G4double sigmaK2[6] = {0.001, 0.0007, 0.0004, 0.0003, 0., 0.};
+  static const G4double sigmaK3[6] = {0.0004, 0.001, 0.001, 0.0008, 0.0007, 0.0006};
+  static const G4double totalXS[6] = {0.138,  0.1296, 0.1275, 0.124,  0.122,  0.12};
+  static G4double upK2(int i);
+  static G4double upK3(int i);
+  static G4double biasedTotal(int i);
+
   // gamma p : Outgoing particle types of a given multiplicity
   static const G4int gamp2bfs[8][2] =
     {{gam,pro}, {pi0, pro}, {pip, neu}, {pro,pi0}, {neu,pip}, {kpl, lam}, {kpl, s0}, {k0, sp}};
@@ -124,10 +155,12 @@ namespace {
 namespace {
   // Total gamma p cross section as a function of kinetic energy
   static const G4double gampTotXSec[30] =
-   {0.0002, 0.0002, 0.0002, 0.0002, 0.0002, 0.0002, 0.0002, 0.0002, 0.0002,
-    0.0002, 0.0002, 0.0723, 0.2327, 0.54,   0.24,   0.19,   0.28,   0.223,
-    0.18,   0.146,  0.138,  0.1296, 0.1275, 0.124,  0.122,  0.12,   0.1185,
-    0.117,  0.115,  0.115};
+   {0.0002, 0.0002, 0.0002, 0.0002, 0.0002, 0.0002, 0.0002, 0.0002, 0.0002, 0.0002, 
+    0.0002, 0.0723, 0.2327, 0.54,   0.24,   0.19,   0.28,   0.223, 0.18, 0.146, 
+    biasedTotal(0), biasedTotal(1), biasedTotal(2),
+    biasedTotal(3), biasedTotal(4), biasedTotal(5),
+    /*0.138,  0.1296, 0.1275, 0.124,  0.122,  0.12, */  
+    0.1185, 0.117,  0.115,  0.115};
 
   static const G4double gampCrossSections[50][30] = {
   //
@@ -162,17 +195,17 @@ namespace {
   // L K+ ( = L K0 )
    {0.0,    0.0,    0.0,    0.0,    0.0,   0.0,  0.0,  0.0,    0.0,    0.0,
     0.0,    0.0,    0.0,    0.0,    0.0,   0.0,  0.0,  0.0012, 0.0019, 0.0007,
-    0.0004, 0.0003, 0.0002, 0.0001, 0.0,   0.0,  0.0,  0.0,    0.0,    0.0}, 
+    upK2(0)*0.0004, upK2(1)*0.0003, upK2(2)*0.0002, upK2(3)*0.0001, upK2(4)*0.0,  upK2(5)*0.0,  0.0,  0.0,    0.0,    0.0}, 
 
   // S0 K+ ( = S0 K0 )
    {0.0,    0.0,    0.0,    0.0,    0.0,  0.0,  0.0,  0.0, 0.0,    0.0,
     0.0,    0.0,    0.0,    0.0,    0.0,  0.0,  0.0,  0.0, 0.0012, 0.0006,
-    0.0003, 0.0002, 0.0001, 0.0001, 0.0,  0.0,  0.0,  0.0, 0.0,    0.0},
+    upK2(0)*0.0003, upK2(1)*0.0002, upK2(2)*0.0001, upK2(3)*0.0001, upK2(4)*0.0, upK2(5)*0.0,  0.0,  0.0, 0.0,    0.0},
  
   // S+ K0  ( = S- K+ )
    {0.0,    0.0,    0.0,    0.0,    0.0,   0.0,  0.0,  0.0, 0.0,    0.0,
     0.0,    0.0,    0.0,    0.0,    0.0,   0.0,  0.0,  0.0, 0.0014, 0.0006,
-    0.0003, 0.0002, 0.0001, 0.0001, 0.0,   0.0,  0.0,  0.0, 0.0,    0.0},
+    upK2(0)*0.0003, upK2(1)*0.0002, upK2(2)*0.0001, upK2(3)*0.0001, upK2(4)*0.0, upK2(5)*0.0,  0.0,  0.0, 0.0,    0.0},
   //
   // multiplicity 3 (6 channels)
   //
@@ -194,17 +227,17 @@ namespace {
   // p K+ K- ( = n K0 K0b )
    {0.0,    0.0,   0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
     0.0,    0.0,   0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-    0.0004, 0.001, 0.001, 0.0008, 0.0007, 0.0006, 0.0005, 0.0003, 0.0002, 0.0001},   
+    upK3(0)*0.0004, upK3(1)*0.001, upK3(2)*0.001, upK3(3)*0.0008, upK3(4)*0.0007, upK3(5)*0.0006, 0.0005, 0.0003, 0.0002, 0.0001},   
 
   // p K0 K0b  (= n K+ K- )
    {0.0,    0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
     0.0,    0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-    0.0004, 0.001, 0.0009, 0.0006, 0.0007, 0.0006, 0.0005, 0.0003, 0.0002, 0.0001},  
+    upK3(0)*0.0004, upK3(1)*0.001, upK3(2)*0.0009, upK3(3)*0.0006, upK3(4)*0.0007, upK3(5)*0.0006, 0.0005, 0.0003, 0.0002, 0.0001},  
 
   // n K+ K0b  (= p K0 K- )
    {0.0,    0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
     0.0,    0.0,   0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
-    0.0004, 0.001, 0.0009, 0.0006, 0.0007, 0.0006, 0.0005, 0.0003, 0.0002, 0.0001},
+    upK3(0)*0.0004, upK3(1)*0.001, upK3(2)*0.0009, upK3(3)*0.0006, upK3(4)*0.0007, upK3(5)*0.0006, 0.0005, 0.0003, 0.0002, 0.0001},
   //
   // multiplicity 4 (4 channels)
   //
@@ -406,11 +439,37 @@ namespace {
 
   // n pi+ pi0 pi0 pi0 pi0 pi0 pi0 pi0 ( = p pi- pi0 pi0 pi0 pi0 pi0 pi0 pi0 )
   // negligible
+
 }
+
+namespace
+{
+  static double upK2(int i)
+  {
+    double denom = totalXS[i] - upK2f*sigmaK2[i] - upK3f*sigmaK3[i];
+    double num = totalXS[i]  - sigmaK2[i] - sigmaK3[i];
+    return upK2f * num/denom;
+  }
+
+  static double upK3(int i)
+  {
+    double denom = totalXS[i] - upK2f*sigmaK2[i] - upK3f*sigmaK3[i];
+    double num = totalXS[i]  - sigmaK2[i] - sigmaK3[i];
+    return  upK3f * num/denom;
+  }
+  
+  static double biasedTotal(int i)
+  {
+    double num = totalXS[i]  - sigmaK2[i] - sigmaK3[i];
+    return num + upK2(i)*sigmaK2[i] + upK3(i)* sigmaK3[i];
+  }
+
+
+}
+
 
 // Initialize both |T Tz> = |1/2 +-1/2> channels using gamma-p cross section
 // tables
-
 const G4CascadeGamPChannelData::data_t
 G4CascadeGamPChannelData::data(gamp2bfs, gamp3bfs, gamp4bfs, gamp5bfs,
                                gamp6bfs, gamp7bfs, gamp8bfs, gamp9bfs,
