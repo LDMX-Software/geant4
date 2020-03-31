@@ -737,7 +737,179 @@ G4NucleiModel::generateQuasiDeuteron(G4int type1, G4int type2,
   return G4InuclElementaryParticle(dmom, dtype);
 }
 
+// Default v10.2.3 method
+void
+G4NucleiModel::generateInteractionPartners(G4CascadParticle& cparticle) {
+  if (verboseLevel > 1) {
+    G4cout << " >>> G4NucleiModel::generateInteractionPartners" << G4endl;
+  }
 
+  thePartners.clear();// Reset buffer for next cycle
+
+  G4int ptype = cparticle.getParticle().type();
+  G4int zone = cparticle.getCurrentZone();
+
+  G4double r_in;// Destination radius if inbound
+  G4double r_out;// Destination radius if outbound
+
+  if (zone == number_of_zones) {
+    r_in = nuclei_radius;
+    r_out = 0.0;
+  } else if (zone == 0) { // particle is outside core
+    r_in = 0.0;
+    r_out = zone_radii[0];
+  } else {
+    r_in = zone_radii[zone - 1];
+    r_out = zone_radii[zone];
+  }  
+
+  G4double path = cparticle.getPathToTheNextZone(r_in, r_out);
+
+  if (verboseLevel > 2) {
+    if (isProjectile(cparticle)) G4cout << " incident particle: ";
+    G4cout << " r_in " << r_in << " r_out " << r_out << " path " << path
+	   << G4endl;
+  }
+
+  if (path < -small) { // something wrong
+    if (verboseLevel)
+      G4cerr << " generateInteractionPartners-> negative path length" << G4endl;
+    return;
+  }
+
+  if (std::fabs(path) < small) {// Not moving, or just at boundary
+    if (cparticle.getMomentum().vect().mag() > small) {
+      if (verboseLevel > 3)
+	G4cout << " generateInteractionPartners-> zero path" << G4endl;
+      
+      thePartners.push_back(partner());// Dummy list terminator with zero path
+      return;
+    }
+
+    if (zone >= number_of_zones)// Place captured-at-rest in nucleus
+      zone = number_of_zones-1;
+  }
+
+  G4double invmfp = 0.;// Buffers for interaction probability
+  G4double spath  = 0.;
+  for (G4int ip = 1; ip < 3; ip++) {
+    // Only process nucleons which remain active in target
+    if (ip==proton  && protonNumberCurrent < 1) continue;
+    if (ip==neutron && neutronNumberCurrent < 1) continue;
+    if (ip==neutron && ptype==muonMinus) continue;// mu-/n forbidden
+
+    // All nucleons are assumed to be at rest when colliding
+    G4InuclElementaryParticle particle = generateNucleon(ip, zone);
+    invmfp = inverseMeanFreePath(cparticle, particle);
+    spath  = generateInteractionLength(cparticle, path, invmfp);
+
+    if (path<small || spath < path) {
+      if (verboseLevel > 3) {
+	G4cout << " adding partner[" << thePartners.size() << "]: "
+	       << particle << G4endl;
+      }
+      thePartners.push_back(partner(particle, spath));
+    }
+  }// for (G4int ip...
+  
+  if (verboseLevel > 2) {
+    G4cout << " after nucleons " << thePartners.size() << " path " << path << G4endl;
+  }
+
+  // Absorption possible for pions or photons interacting with dibaryons
+  if (useQuasiDeuteron(cparticle.getParticle().type())) {
+    if (verboseLevel > 2) {
+      G4cout << " trying quasi-deuterons with bullet: "
+	     << cparticle.getParticle() << G4endl;
+    }
+  
+    // Initialize buffers for quasi-deuteron results
+    qdeutrons.clear();
+    acsecs.clear();
+  
+    G4double tot_invmfp = 0.0;// Total inv. mean-free-path for all QDs
+
+    // Proton-proton state interacts with pi-, mu- or neutrals
+    if (protonNumberCurrent >= 2 && ptype != pip) {
+      G4InuclElementaryParticle ppd = generateQuasiDeuteron(pro, pro, zone);
+      if (verboseLevel > 2)
+	G4cout << " ptype=" << ptype << " using pp target\n" << ppd << G4endl;
+      
+      invmfp = inverseMeanFreePath(cparticle, ppd);      
+      tot_invmfp += invmfp;
+      acsecs.push_back(invmfp);
+      qdeutrons.push_back(ppd);
+    }
+    
+    // Proton-neutron state interacts with any pion type or photon
+    if (protonNumberCurrent >= 1 && neutronNumberCurrent >= 1) {
+      G4InuclElementaryParticle npd = generateQuasiDeuteron(pro, neu, zone);
+      if (verboseLevel > 2) 
+	G4cout << " ptype=" << ptype << " using np target\n" << npd << G4endl;
+      
+      invmfp = inverseMeanFreePath(cparticle, npd);
+      tot_invmfp += invmfp;
+      acsecs.push_back(invmfp);
+      qdeutrons.push_back(npd);
+    }
+    
+    // Neutron-neutron state interacts with pi+ or neutrals
+    if (neutronNumberCurrent >= 2 && ptype != pim && ptype != mum) {
+      G4InuclElementaryParticle nnd = generateQuasiDeuteron(neu, neu, zone);
+      if (verboseLevel > 2)
+	G4cout << " ptype=" << ptype << " using nn target\n" << nnd << G4endl;
+      
+      invmfp = inverseMeanFreePath(cparticle, nnd);
+      tot_invmfp += invmfp;
+      acsecs.push_back(invmfp);
+      qdeutrons.push_back(nnd);
+    } 
+    
+    // Select quasideuteron interaction from non-zero cross-section choices
+    if (verboseLevel > 2) {
+      for (size_t i=0; i<qdeutrons.size(); i++) {
+	G4cout << " acsecs[" << qdeutrons[i].getDefinition()->GetParticleName()
+	       << "] " << acsecs[i];
+      }
+      G4cout << G4endl;
+    }
+  
+    if (tot_invmfp > small) {// Must have absorption cross-section
+      G4double apath = generateInteractionLength(cparticle, path, tot_invmfp);
+      
+      if (path<small || apath < path) {// choose the qdeutron
+	G4double sl = inuclRndm() * tot_invmfp;
+	G4double as = 0.0;
+	
+	for (size_t i = 0; i < qdeutrons.size(); i++) {
+	  as += acsecs[i];
+	  if (sl < as) { 
+	    if (verboseLevel > 2)
+	      G4cout << " deut type " << qdeutrons[i] << G4endl; 
+
+	    thePartners.push_back(partner(qdeutrons[i], apath));
+	    break;
+	  }
+	}// for (qdeutrons...
+      }// if (apath < path)
+    }// if (tot_invmfp > small)
+  }// if (useQuasiDeuteron) [pion, muon or photon]
+  
+  if (verboseLevel > 2) {
+    G4cout << " after deuterons " << thePartners.size() << " partners"
+	   << G4endl;
+  }
+  
+  if (thePartners.size() > 1) {// Sort list by path length
+    std::sort(thePartners.begin(), thePartners.end(), sortPartners);
+  }
+  
+  G4InuclElementaryParticle particle;// Total path at end of list
+  thePartners.push_back(partner(particle, path));
+}
+
+
+/* LDMX mod 
 void
 G4NucleiModel::generateInteractionPartners(G4CascadParticle& cparticle) {
   if (verboseLevel > 1) {
@@ -971,6 +1143,7 @@ G4NucleiModel::generateInteractionPartners(G4CascadParticle& cparticle) {
   G4InuclElementaryParticle dummyParticle;		// Total path at end of list
   thePartners.push_back(partner(dummyParticle, path));
 }
+*/
 
 
 void G4NucleiModel::
@@ -1534,6 +1707,35 @@ G4double G4NucleiModel::getRatio(G4int ip) const {
   return 0.;
 }
 
+
+// reverted to v10.2.3 code
+G4double G4NucleiModel::getCurrentDensity(G4int ip, G4int izone) const {
+  const G4double pn_spec = 1.0;// Scale factor for pn vs. pp/nn
+  //const G4double pn_spec = 0.5;
+
+  G4double dens = 0.;
+
+  if (ip < 100) dens = getDensity(ip,izone);
+  else {// For dibaryons, remove extra 1/volume term in density product
+    switch (ip) {
+    case diproton:  
+      dens = getDensity(proton,izone) * getDensity(proton,izone);
+      break;
+    case unboundPN: 
+      dens = getDensity(proton,izone) * getDensity(neutron,izone) * pn_spec;
+      break;
+    case dineutron:
+      dens = getDensity(neutron,izone) * getDensity(neutron,izone);
+      break;
+    default: dens = 0.;
+    }
+    dens *= getVolume(izone);
+  }
+
+  return getRatio(ip) * dens;
+}
+
+/* LDMX fix version
 G4double G4NucleiModel::getCurrentDensity(G4int ip, G4int izone) const {
   const G4double combinatoric = 0.5;		// Scale factor for pn vs. pp/nn
   //const G4double pn_spec = 0.5;
@@ -1558,7 +1760,7 @@ G4double G4NucleiModel::getCurrentDensity(G4int ip, G4int izone) const {
   }
 
   return getRatio(ip) * dens;
-}
+  }*/
 
 
 G4CascadParticle 
