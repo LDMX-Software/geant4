@@ -64,8 +64,8 @@ namespace {
   // or 2-body only by ~70.  At higher biases, interpolation 
   // artifacts lead to sizable energy-dependence in actual bias.
   // For 4 GeV beam, could do 2-body biasing up to ~100.
-  static const G4double upK2f = 45.; 
-  static const G4double upK3f = 45.; 
+  static const G4double upK2f = 15.; 
+  static const G4double upK3f = 15.; 
                                   
   static const G4double sigmaK2[6] = {0.001, 0.0007, 0.0004, 0.0003, 0., 0.};
   static const G4double sigmaK3[6] = {0.0004, 0.001, 0.001, 0.0008, 0.0007, 0.0006};
