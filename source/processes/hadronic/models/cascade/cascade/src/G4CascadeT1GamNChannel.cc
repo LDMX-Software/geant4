@@ -40,6 +40,7 @@
 #include "G4CascadeGamPChannel.hh"
 #include "G4CascadeGamNChannel.hh"
 #include "G4InuclParticleNames.hh"
+#include "G4CascadeParameters.hh"
 using namespace G4InuclParticleNames;
 
 /* * * * * * ** * * * * * * ** * * * * * * ** * * * * * * ** * * * * * * ** * * * * * * ** 
@@ -60,15 +61,15 @@ MODEL FOR 8 GEV STUDIES. -NT
 namespace {
 
 
-  // Can safely bias 2- and 3-body simultaneously by ~60
+  // Can safely bias 2- and 3-body simultaneously by ~25-30
   // or 2-body only by ~70.  At higher biases, interpolation 
   // artifacts lead to sizable energy-dependence in actual bias.
   // For 4 GeV beam, could do 2-body biasing up to ~100. 
-  static const G4double upK2f = 60.; 
-  static const G4double upK3f = 60.; 
-                                  
+  static const G4double upK2f = 25.; //G4CascadeParameters::kaonEnhancementFactor();
+  static const G4double upK3f = 25.; //G4CascadeParameters::kaonEnhancementFactor(); 
+
   static const G4double sigmaK2[6] = {0.001, 0.0007, 0.0004, 0.0003, 0., 0.};
-  static const G4double sigmaK3[6] = {0.0004, 0.001, 0.001, 0.0008, 0.0007, 0.0006};
+  static const G4double sigmaK3[6] = {0.0012, 0.003, 0.0028, 0.002, 0.0021, 0.0018};
   static const G4double totalXS[6] = {0.138,  0.1296, 0.1275, 0.124,  0.122,  0.12};
   static G4double upK2(int i);
   static G4double upK3(int i);
