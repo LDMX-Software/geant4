@@ -91,6 +91,9 @@ private:
   G4UIcmdWithADouble*   coalDPmax2Cmd;
   G4UIcmdWithADouble*   coalDPmax3Cmd;
   G4UIcmdWithADouble*   coalDPmax4Cmd;
+
+
+  G4UIcmdWithADouble*   kaonEnhancementFactorCmd;
 };
 
 // Templated function implementation below

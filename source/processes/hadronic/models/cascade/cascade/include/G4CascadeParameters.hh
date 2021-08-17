@@ -75,6 +75,7 @@ public:
   static G4double dpMaxDoublet() { return Instance()->DPMAX_DOUBLET; }
   static G4double dpMaxTriplet() { return Instance()->DPMAX_TRIPLET; }
   static G4double dpMaxAlpha()   { return Instance()->DPMAX_ALPHA; }
+  static G4double kaonEnhancementFactor() { return Instance()->KAON_ENHANCEMENT_FACTOR; }
 
   static void DumpConfiguration(std::ostream& os) { Instance()->DumpConfig(os); }
 
@@ -98,6 +99,7 @@ private:	// Environment variable values, null pointers mean not set
   const char* G4NUCMODEL_XSEC_SCALE;
   const char* G4NUCMODEL_GAMMAQD;
   const char* G4NUCMODEL_POTENTIAL_THICKNESS;
+  const char* G4CASCADE_KAON_ENHANCEMENT_FACTOR;
   const char* DPMAX_2CLUSTER;
   const char* DPMAX_3CLUSTER;
   const char* DPMAX_4CLUSTER;
@@ -128,6 +130,8 @@ private:	// Environment variable values, null pointers mean not set
   G4double DPMAX_DOUBLET;	// Final-state clustering cuts
   G4double DPMAX_TRIPLET;
   G4double DPMAX_ALPHA;
+
+  G4double KAON_ENHANCEMENT_FACTOR; // Added by NT 8-13-2021
 
 private:	// Singleton -- no public constructor
   G4CascadeParameters();
