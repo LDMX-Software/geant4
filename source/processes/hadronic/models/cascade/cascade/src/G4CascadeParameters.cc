@@ -135,6 +135,7 @@ void G4CascadeParameters::Initialize() {
 	   << "RESETTING TO DEFAULT VALUE OF 25." << G4endl;
     KAON_ENHANCEMENT_FACTOR=25.0;
   }
+  G4cout << " Using KAON_ENHANCEMENT_FACTOR = " << KAON_ENHANCEMENT_FACTOR << "  (INPUT " << G4CASCADE_KAON_ENHANCEMENT_FACTOR << ")" << G4endl;
 }
 
 G4CascadeParameters::~G4CascadeParameters() {
