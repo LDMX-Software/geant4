@@ -99,6 +99,10 @@ G4CascadeParamMessenger::G4CascadeParamMessenger(G4CascadeParameters* params)
 			"Maximum momentum for ppn/pnn clusters");
   coalDPmax4Cmd = CreateCommand<G4UIcmdWithADouble>("cluster4DPmax",
 			"Maximum momentum for alpha clusters");
+
+  kaonEnhancementFactorCmd = CreateCommand<G4UIcmdWithADouble>("kaonEnhancementFactor",
+			"Factor by which to enhance kaon production in photon-nucleon scattering");
+
 }
 
 G4CascadeParamMessenger::~G4CascadeParamMessenger() {
@@ -124,6 +128,7 @@ G4CascadeParamMessenger::~G4CascadeParamMessenger() {
   delete coalDPmax2Cmd;
   delete coalDPmax3Cmd;
   delete coalDPmax4Cmd;
+  delete kaonEnhancementFactorCmd;
   if (localCmdDir) delete cmdDir;
 }
 
@@ -222,6 +227,9 @@ void G4CascadeParamMessenger::SetNewValue(G4UIcommand* cmd, G4String arg) {
 
   if (cmd == coalDPmax4Cmd)
     theParams->DPMAX_4CLUSTER = strdup(arg.c_str());
+
+  if (cmd == kaonEnhancementFactorCmd)
+    theParams->G4CASCADE_KAON_ENHANCEMENT_FACTOR = strdup(arg.c_str());
 
   theParams->Initialize();	// Update numerical values from settings
 }
