@@ -1315,17 +1315,7 @@ void G4NucleiModel::boundaryTransition(G4CascadParticle& cparticle) {
 
   if(adjustpperp){
     G4ThreeVector old_pperp=mom.vect()-pos*(pr/r);
-    if(verboseLevel > 4) {
-      G4cout << " pperp_x  " << old_pperp.x() 
-	     << " pperp_y  " << old_pperp.y() 
-	     << " pperp_z  " << old_pperp.z() 
-	     << " pperp.r " << old_pperp.dot(pos)
-	     << " |pperp|" << old_pperp.mag() << " =? " << std::sqrt(pperp2) << G4endl;
-	}
-    G4double new_pperp_mag=std::sqrt(pperp2 + qv - p1r*p1r);
-    if(verboseLevel > 4) {
-      G4cout << " |pperp|_new  " << new_pperp_mag << G4endl;
-    }
+    G4double new_pperp_mag=std::sqrt(max(0.0,pperp2 + qv - p1r*p1r)); // Adopting change from G410.5->10.6 to protect from negative argument
     mom.setVect(old_pperp * new_pperp_mag/std::sqrt(pperp2)); // new total momentum found by rescaling p_perp
     mom.setVect(mom.vect() + pos* p1r/r); // add a small radial component to make sure that we propagate into new zone.
 
