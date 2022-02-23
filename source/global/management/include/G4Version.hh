@@ -50,7 +50,7 @@
 #endif
 
 #ifndef G4VERSION_TAG
-#define G4VERSION_TAG "${GIT_SHA1}" 
+#define G4VERSION_TAG "a893b22703b5ee67b8a30473d8c4cb5e90310203" 
 #endif
 
 // as variables

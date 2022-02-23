@@ -196,6 +196,7 @@
 #include <algorithm>
 #include <functional>
 #include <numeric>
+#include <cmath>
 
 using namespace G4InuclParticleNames;
 using namespace G4InuclSpecialFunctions;
@@ -744,9 +745,23 @@ G4NucleiModel::generateInteractionPartners(G4CascadParticle& cparticle) {
     G4cout << " >>> G4NucleiModel::generateInteractionPartners" << G4endl;
   }
 
+  //NT: For incident photons or muons (forceFirst=true), interactions are forced
+  // in generateInteractionLength, so can't use path-based selection of partner.
+  // In that case, and that case only, we will build a list of "candidatePartners", 
+  // and choose one according to cross-section.  
+  // These treatments are inequivalent because of the
+  // rejection of "young" particle interactions (in generateInteractionLength)
+  // and of interactions that fail after being selected, for example due to
+  // Pauli blocking. 
+  bool chooseOnePartner = forceFirst(cparticle);
+  if(verboseLevel > 2)
+    if(chooseOnePartner) G4cout << "will choose one partner among ccandidatePartners based on cross-sections" << G4endl;
+    else G4cout << "will create list of partners based on mean free path" << G4endl;
+
 
   std::vector<partner> candidatePartners(0);		// Buffer for output below
-  // NT: use candidatePartners as a buffer of <particle, INVMFP>
+  // NT: when chooseOnePartner=true, 
+  // use candidatePartners as a buffer of <particle, INVMFP>
   // for candidates.  Then choose which one to execute later.
 
   thePartners.clear();		// Reset buffer for next cycle
@@ -808,23 +823,38 @@ G4NucleiModel::generateInteractionPartners(G4CascadParticle& cparticle) {
     // All nucleons are assumed to be at rest when colliding
     G4InuclElementaryParticle particle = generateNucleon(ip, zone);
     invmfp = inverseMeanFreePath(cparticle, particle);
-
-    //    spath  = generateInteractionLength(cparticle, path, invmfp);
-
-    //    if (path<small || spath < path) {  // NT: put everything in this stack, not just selected.
-    if (verboseLevel > 3) {
-      G4cout << " adding partner[" << candidatePartners.size() << "]: "
-	     << particle 
-	     << " invmfp = " << invmfp << G4endl;
-    }
-    candidatePartners.push_back(partner(particle, invmfp));
     total_invmfp += invmfp;
 
-    //}
-  }	// for (G4int ip...
+    if(chooseOnePartner)
+      {
+	// Add each possible partner and its invmfp to candidatePartners stack
+	if (verboseLevel > 3) {
+	  G4cout << " adding partner[" << candidatePartners.size() << "]: "
+		 << particle 
+		 << " invmfp = " << invmfp << G4endl;
+	}
+	candidatePartners.push_back(partner(particle, invmfp));
+      }
+    else { // ! chooseOnePartner
+	// Generate interaction lengths for each possible partner, and 
+	// if it is < path to next zone, add to thePartners stack
+	spath  = generateInteractionLength(cparticle, path, invmfp);
+	if (path<small || spath < path) {
+	  if (verboseLevel > 3) {
+	    G4cout << " adding partner[" << thePartners.size() << "]: "
+		   << particle << G4endl;
+	  }
+	  thePartners.push_back(partner(particle, spath));
+	}	
+    }// endif(chooseOnePartner) 
+      
+  }// for (G4int ip...
   
   if (verboseLevel > 2) {
-    G4cout << " after nucleons " << candidatePartners.size() << " path " << path << G4endl;
+    if(chooseOnePartner)
+      G4cout << " after nucleons " << candidatePartners.size() << " candidatePartners, invmfp " << total_invmfp << ", path " << path << G4endl;
+    else
+      G4cout << " after nucleons " << thePartners.size() << " partners, path " << path << G4endl;
   }
 
   // Absorption possible for pions or photons interacting with dibaryons
@@ -833,11 +863,13 @@ G4NucleiModel::generateInteractionPartners(G4CascadParticle& cparticle) {
       G4cout << " trying quasi-deuterons with bullet: "
 	     << cparticle.getParticle() << G4endl;
     }
-  
+    
     // Initialize buffers for quasi-deuteron results
     qdeutrons.clear();
-    //    acsecs.clear();
-  
+    acsecs.clear();
+    G4double dinuc_invmfp = 0.0;      	// Total inv. mean-free-path for all QDs
+    
+    
     // Proton-proton state interacts with pi-, mu- or neutrals
     if (protonNumberCurrent >= 2 && ptype != pip) {
       G4InuclElementaryParticle ppd = generateQuasiDeuteron(pro, pro, zone);
@@ -845,16 +877,21 @@ G4NucleiModel::generateInteractionPartners(G4CascadParticle& cparticle) {
 	G4cout << " ptype=" << ptype << " using pp target\n" << ppd << G4endl;
       
       invmfp = inverseMeanFreePath(cparticle, ppd);      
-      candidatePartners.push_back(partner(ppd, invmfp));
+      dinuc_invmfp += invmfp;
       total_invmfp += invmfp;
+      
+      if(chooseOnePartner)
+	candidatePartners.push_back(partner(ppd, invmfp));
+      else{
+	acsecs.push_back(invmfp);
+        qdeutrons.push_back(ppd);
+      }
 
-      if(verboseLevel > 3)
+      if(verboseLevel > 3 && chooseOnePartner)
 	G4cout << " adding partner[" << candidatePartners.size() << "]: "
 	       << ppd  
 	       << " invmfp = " << invmfp << G4endl;
 
-      //      acsecs.push_back(invmfp);
-      //      qdeutrons.push_back(ppd);
     }
     
     // Proton-neutron state interacts with any pion type or photon
@@ -864,20 +901,21 @@ G4NucleiModel::generateInteractionPartners(G4CascadParticle& cparticle) {
 	G4cout << " ptype=" << ptype << " using np target\n" << npd << G4endl;
       
       invmfp = inverseMeanFreePath(cparticle, npd);
-      candidatePartners.push_back(partner(npd, invmfp));
+      dinuc_invmfp += invmfp;
       total_invmfp += invmfp;
 
-      if(verboseLevel > 3)
+      if(chooseOnePartner)
+	candidatePartners.push_back(partner(npd, invmfp));
+      else{
+	acsecs.push_back(invmfp);
+        qdeutrons.push_back(npd);
+      }
+
+      if(verboseLevel > 3 && chooseOnePartner)
 	G4cout << " adding partner[" << candidatePartners.size() << "]: "
 	       << npd  
 	       << " invmfp = " << invmfp << G4endl;
 
-      //      tot_invmfp += invmfp;
-      //      acsecs.push_back(invmfp);
-      //      qdeutrons.push_back(ppd);
-
-      acsecs.push_back(invmfp);
-      qdeutrons.push_back(npd);
     }
     
     // Neutron-neutron state interacts with pi+ or neutrals
@@ -887,38 +925,77 @@ G4NucleiModel::generateInteractionPartners(G4CascadParticle& cparticle) {
 	G4cout << " ptype=" << ptype << " using nn target\n" << nnd << G4endl;
       
       invmfp = inverseMeanFreePath(cparticle, nnd);
-      candidatePartners.push_back(partner(nnd, invmfp));
+      dinuc_invmfp += invmfp;
       total_invmfp += invmfp;
 
-      if(verboseLevel > 3)
+      if(chooseOnePartner)
+	candidatePartners.push_back(partner(nnd, invmfp));
+      else{
+	acsecs.push_back(invmfp);
+        qdeutrons.push_back(nnd);
+      }
+
+      if(verboseLevel > 3 && chooseOnePartner)
 	G4cout << " adding partner[" << candidatePartners.size() << "]: "
 	       << nnd  
 	       << " invmfp = " << invmfp << G4endl;
-
-      //      tot_invmfp += invmfp;
-      //      acsecs.push_back(invmfp);
-      //      qdeutrons.push_back(ppd);
     } 
     
-    // Select interaction from non-zero cross-section choices
-    if (verboseLevel > 2) {
+    // debug output for !chooseOnePartner (standard) mode -- dinucleons only: 
+    if (verboseLevel > 2 && !chooseOnePartner) {
+      for (size_t i=0; i<qdeutrons.size(); i++) {
+	G4cout << " acsecs[" << qdeutrons[i].getDefinition()->GetParticleName()
+	       << "] " << acsecs[i];
+      }
+      G4cout << G4endl;
+    }
+  
+
+
+    // debug output for chooseOnePartner mode -- nucleons and dinucleons:
+    if (verboseLevel > 2 && chooseOnePartner) {
+      G4cout << " after deuterons " << candidatePartners.size() << " partners"
+	     << G4endl;
+
       for (size_t i=0; i<candidatePartners.size(); i++) {
 	G4cout << " csecs[" << candidatePartners[i].first.getDefinition()->GetParticleName()
 	       << "] " << candidatePartners[i].second;
       }
       G4cout << G4endl;
     }
-    
-  if (verboseLevel > 2) {
-    G4cout << " after deuterons " << candidatePartners.size() << " partners"
-	   << G4endl;
-  }
+
+
+    // In !chooseOnePartner (standard) mode, now need to choose one dinucleon to
+    // add to Partners list:
+    if (!chooseOnePartner && dinuc_invmfp > small) { // Must have absorption cross-section
+      G4double apath = generateInteractionLength(cparticle, path, dinuc_invmfp);
+      
+      if (path<small || apath < path) {		// choose the qdeutron
+	G4double sl = inuclRndm() * dinuc_invmfp;
+	G4double as = 0.0;
+	
+	for (size_t i = 0; i < qdeutrons.size(); i++) {
+	  as += acsecs[i];
+	  if (sl < as) { 
+	    if (verboseLevel > 2)
+	      G4cout << " deut type " << qdeutrons[i] << G4endl; 
+
+	    thePartners.push_back(partner(qdeutrons[i], apath));
+	    break;
+	  }
+	}	// for (qdeutrons...
+      }		// if (apath < path)
+    }		// if (!chooseOnePartner && dinuc_invmfp > small)
+
 
   }		// if (useQuasiDeuteron) [pion, muon or photon]
   
-  if (total_invmfp > small   // Must have scattering or absorption cross-section
-      && candidatePartners.size()>1) {	
-    
+
+  // This chooses interaction point and (up to) one partner among the candidates to add to working stack thePartners
+  if (chooseOnePartner && total_invmfp > small   // Must have scattering or absorption cross-section
+      &&       candidatePartners.size() >=1 ) {	
+  //NT: condition used to be candidatePartners.size() > 1 but I think that's incorrect 
+
     // choose interaction point.  Hadrons may have intpath>path, photons and muons
     // are forced to interact so intpath<path.
     // note this mean free path includes both scattering and absorption
@@ -960,12 +1037,18 @@ G4NucleiModel::generateInteractionPartners(G4CascadParticle& cparticle) {
 	} 
       }	// for (candidatePartners...
     }		// if (intPath < path)
-  }		// if (total_invmfp > small)
+  }		// if (chooseOnePartner && total_invmfp > small ...) 
 
   
   if (thePartners.size() > 1) {		// Sort list by path length
-    G4cerr << " >> G4NucleiModel::generateInteractionPartners: thePartners.size() > 1 SHOULD NEVER BE REALIZED!" << G4endl;
+    if(chooseOnePartner) G4cerr << " >> G4NucleiModel::generateInteractionPartners: thePartners.size() > 1 SHOULD NEVER BE REALIZED!" << G4endl;
     std::sort(thePartners.begin(), thePartners.end(), sortPartners);
+    if(verboseLevel>3) {
+      G4cout << " Sorted list of interaction partners: " << G4endl;
+      for (std::vector<partner>::const_iterator i=thePartners.begin(); i != thePartners.end(); ++i) {
+	G4cout << " type " << i->first << " pathlength " << i->second << G4endl; 
+      }
+    }
   }
   
   G4InuclElementaryParticle dummyParticle;		// Total path at end of list
@@ -1315,7 +1398,7 @@ void G4NucleiModel::boundaryTransition(G4CascadParticle& cparticle) {
 
   if(adjustpperp){
     G4ThreeVector old_pperp=mom.vect()-pos*(pr/r);
-    G4double new_pperp_mag=std::sqrt(max(0.0,pperp2 + qv - p1r*p1r)); // Adopting change from G410.5->10.6 to protect from negative argument
+    G4double new_pperp_mag=std::sqrt(std::max(0.0,pperp2 + qv - p1r*p1r)); // Adopting change from G410.5->10.6 to protect from negative argument
     mom.setVect(old_pperp * new_pperp_mag/std::sqrt(pperp2)); // new total momentum found by rescaling p_perp
     mom.setVect(mom.vect() + pos* p1r/r); // add a small radial component to make sure that we propagate into new zone.
 
