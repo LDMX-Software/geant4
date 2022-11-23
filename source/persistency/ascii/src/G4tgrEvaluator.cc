@@ -77,7 +77,7 @@ G4double ftanh( G4double arg ){  return std::tanh(arg); }
 // G4double fasinh( G4double arg ){  return std::asinh(arg); }
 // G4double facosh( G4double arg ){  return std::acosh(arg); }
 // G4double fatanh( G4double arg ){  return std::atanh(arg); }
-G4double fsqrt( G4double arg ){  return std::sqrt(arg); }
+G4double g4fsqrt( G4double arg ){  return std::sqrt(arg); }
 G4double fexp( G4double arg ){  return std::exp(arg); }
 G4double flog( G4double arg ){  return std::log(arg); }
 G4double flog10( G4double arg ){  return std::log10(arg); }
@@ -100,7 +100,7 @@ void G4tgrEvaluator::AddCommonFunctions()
 //  setFunction("asinh", (*fasinh));
 //  setFunction("acosh", (*facosh));
 //  setFunction("atanh", (*fatanh));
-  setFunction("sqrt", (*fsqrt));
+  setFunction("sqrt", (*g4fsqrt));
   setFunction("exp", (*fexp));
   setFunction("log", (*flog));
   setFunction("log10", (*flog10));
