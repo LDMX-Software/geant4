@@ -490,6 +490,7 @@ G4VParticleChange* G4BiasingProcessInterface::PostStepDoIt(const G4Track& track,
 								  fFinalStateBiasingOperation, finalStateParticleChange );
 
 
+  fOccurenceBiasingParticleChange->Initialize(track);
   fOccurenceBiasingParticleChange->SetOccurenceWeightForInteraction( weightForInteraction );
   fOccurenceBiasingParticleChange->SetSecondaryWeightByProcess( true );
   fOccurenceBiasingParticleChange->SetWrappedParticleChange( finalStateParticleChange );
