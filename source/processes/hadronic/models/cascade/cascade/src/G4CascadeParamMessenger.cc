@@ -93,6 +93,8 @@ G4CascadeParamMessenger::G4CascadeParamMessenger(G4CascadeParameters* params)
 			"Scale fator for total cross-sections");
   nucGammaQDCmd = CreateCommand<G4UIcmdWithADouble>("gammaQuasiDeutScale",
 			"Scale factor for gamma-quasideutron cross-sections");
+  nucPotentialThicknessCmd = CreateCommand<G4UIcmdWithADouble>("potentialThickness",
+			"Thickness (in fm) of zone potential walls, for penetration by low p_r high L particles");
   coalDPmax2Cmd = CreateCommand<G4UIcmdWithADouble>("cluster2DPmax",
 			"Maximum momentum for p-n clusters");
   coalDPmax3Cmd = CreateCommand<G4UIcmdWithADouble>("cluster3DPmax",
@@ -121,6 +123,7 @@ G4CascadeParamMessenger::~G4CascadeParamMessenger() {
   delete nucFermiScaleCmd;
   delete nucXsecScaleCmd;
   delete nucGammaQDCmd;
+  delete nucPotentialThicknessCmd;
   delete coalDPmax2Cmd;
   delete coalDPmax3Cmd;
   delete coalDPmax4Cmd;
@@ -187,6 +190,9 @@ void G4CascadeParamMessenger::SetNewValue(G4UIcommand* cmd, G4String arg) {
 
   if (cmd == nucGammaQDCmd)
     theParams->G4NUCMODEL_GAMMAQD = strdup(arg.c_str());
+
+  if (cmd == nucPotentialThicknessCmd)
+    theParams->G4NUCMODEL_POTENTIAL_THICKNESS = strdup(arg.c_str());
 
   if (cmd == coalDPmax2Cmd)
     theParams->DPMAX_2CLUSTER = strdup(arg.c_str());

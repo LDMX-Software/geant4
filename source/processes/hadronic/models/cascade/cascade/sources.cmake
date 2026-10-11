@@ -98,6 +98,7 @@ geant4_add_module(G4hadronic_bert_cascade
     G4FissionStore.hh
     G4Fissioner.hh
     G4GamP2NPipAngDst.hh
+    G4GamP2NucPiBackscatterAngDst.hh
     G4GamP2PPi0AngDst.hh
     G4GammaNuclAngDst.hh
     G4GDecay3.hh
@@ -213,6 +214,7 @@ geant4_add_module(G4hadronic_bert_cascade
     G4FissionStore.cc
     G4Fissioner.cc
     G4GamP2NPipAngDst.cc
+    G4GamP2NucPiBackscatterAngDst.cc
     G4GamP2PPi0AngDst.cc
     G4GammaNuclAngDst.cc
     G4GDecay3.cc

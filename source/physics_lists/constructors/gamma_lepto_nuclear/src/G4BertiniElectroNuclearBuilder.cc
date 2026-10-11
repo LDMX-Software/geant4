@@ -92,9 +92,10 @@ void G4BertiniElectroNuclearBuilder::Build()
 
   G4ProcessManager* aProcMan = nullptr;
 
-  theGammaReaction->SetMaxEnergy(3.5*GeV);
+  // LDMX: Bertini up to 10 GeV and QGS from 8 GeV
+  theGammaReaction->SetMaxEnergy(10.*GeV);
   thePhotoNuclearProcess->RegisterMe(theGammaReaction);
-  theModel->SetMinEnergy(3.*GeV);
+  theModel->SetMinEnergy(8.*GeV);
   theModel->SetMaxEnergy( G4HadronicParameters::Instance()->GetMaxEnergy() );
   thePhotoNuclearProcess->RegisterMe(theModel);
   
