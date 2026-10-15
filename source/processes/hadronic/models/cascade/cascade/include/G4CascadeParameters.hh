@@ -69,7 +69,6 @@ public:
   static G4double fermiScale()     { return Instance()->FERMI_SCALE; }
   static G4double xsecScale()      { return Instance()->XSEC_SCALE; }
   static G4double gammaQDScale()   { return Instance()->GAMMAQD_SCALE; }
-  static G4double potentialThickness() { return Instance()->POTENTIAL_THICKNESS; }
 
   // Final-state clustering cuts
   static G4double dpMaxDoublet() { return Instance()->DPMAX_DOUBLET; }
@@ -98,7 +97,6 @@ private:	// Environment variable values, null pointers mean not set
   const char* G4NUCMODEL_FERMI_SCALE;
   const char* G4NUCMODEL_XSEC_SCALE;
   const char* G4NUCMODEL_GAMMAQD;
-  const char* G4NUCMODEL_POTENTIAL_THICKNESS;
   const char* DPMAX_2CLUSTER;
   const char* DPMAX_3CLUSTER;
   const char* DPMAX_4CLUSTER;
@@ -129,7 +127,6 @@ private:	// Environment variable values, null pointers mean not set
   G4double FERMI_SCALE;
   G4double XSEC_SCALE;
   G4double GAMMAQD_SCALE;
-  G4double POTENTIAL_THICKNESS;	// LDMX: zone wall thickness (fm) for high L penetration
 
   G4double DPMAX_DOUBLET;	// Final-state clustering cuts
   G4double DPMAX_TRIPLET;

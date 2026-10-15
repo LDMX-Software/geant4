@@ -106,8 +106,7 @@ G4EmStandardPhysics_option3::G4EmStandardPhysics_option3(G4int ver,
   G4EmParameters* param = G4EmParameters::Instance();
   param->SetDefaults();
   param->SetVerbose(ver);
-  // LDMX: keep gamma processes separate, biasing looks them up by name
-  param->SetGeneralProcessActive(false);
+  param->SetGeneralProcessActive(true);
   param->SetMinEnergy(10*CLHEP::eV);
   param->SetLowestElectronEnergy(100*CLHEP::eV);
   param->SetNumberOfBinsPerDecade(20);

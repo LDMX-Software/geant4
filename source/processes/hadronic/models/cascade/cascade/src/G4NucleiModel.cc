@@ -246,7 +246,7 @@ G4NucleiModel::G4NucleiModel()
     fermiMomentum(G4CascadeParameters::fermiScale()),
     R_nucleon(G4CascadeParameters::radiusTrailing()),
     gammaQDscale(G4CascadeParameters::gammaQDScale()),
-    potentialThickness(G4CascadeParameters::potentialThickness()),
+    potentialThickness(1.0),
     neutronEP(neutron), protonEP(proton) {}
 
 G4NucleiModel::G4NucleiModel(G4int a, G4int z)
@@ -264,7 +264,7 @@ G4NucleiModel::G4NucleiModel(G4int a, G4int z)
     fermiMomentum(G4CascadeParameters::fermiScale()),
     R_nucleon(G4CascadeParameters::radiusTrailing()),
     gammaQDscale(G4CascadeParameters::gammaQDScale()),
-    potentialThickness(G4CascadeParameters::potentialThickness()),
+    potentialThickness(1.0),
     neutronEP(neutron), protonEP(proton) {
   generateModel(a,z);
 }
@@ -284,7 +284,7 @@ G4NucleiModel::G4NucleiModel(G4InuclNuclei* nuclei)
     fermiMomentum(G4CascadeParameters::fermiScale()),
     R_nucleon(G4CascadeParameters::radiusTrailing()),
     gammaQDscale(G4CascadeParameters::gammaQDScale()),
-    potentialThickness(G4CascadeParameters::potentialThickness()),
+    potentialThickness(1.0),
     neutronEP(neutron), protonEP(proton) {
   generateModel(nuclei);
 }

@@ -84,7 +84,6 @@ private:
   G4UIcmdWithADouble*   nucFermiScaleCmd;
   G4UIcmdWithADouble*   nucXsecScaleCmd;
   G4UIcmdWithADouble*   nucGammaQDCmd;
-  G4UIcmdWithADouble*   nucPotentialThicknessCmd;
   G4UIcmdWithADouble*   coalDPmax2Cmd;
   G4UIcmdWithADouble*   coalDPmax3Cmd;
   G4UIcmdWithADouble*   coalDPmax4Cmd;

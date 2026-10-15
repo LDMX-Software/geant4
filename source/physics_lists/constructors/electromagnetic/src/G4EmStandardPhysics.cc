@@ -90,8 +90,7 @@ G4EmStandardPhysics::G4EmStandardPhysics(G4int ver, const G4String&)
   G4EmParameters* param = G4EmParameters::Instance();
   param->SetDefaults();
   param->SetVerbose(ver);
-  // LDMX: keep gamma processes separate, biasing looks them up by name
-  param->SetGeneralProcessActive(false);
+  param->SetGeneralProcessActive(true);
   param->SetFluctuationType(fUrbanFluctuation);
   SetPhysicsType(bElectromagnetic);
 }

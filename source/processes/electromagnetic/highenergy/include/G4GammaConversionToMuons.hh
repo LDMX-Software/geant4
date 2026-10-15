@@ -122,11 +122,6 @@ private:
   const G4Element* SelectRandomAtom(const G4DynamicParticle* aDynamicGamma,
                                     const G4Material* aMaterial);
 
-  // LDMX: full Tsai (1974) matrix element sampling
-  void SampleTsai(G4double Egam, G4double A027, G4double& xPlus,
-                  G4double& thetaPlus, G4double& thetaMinus,
-                  G4double& phiHalf) const;
-
   G4double Mmuon;
   G4double Rc;
   G4double LimitEnergy;          // energy limit for accurate x-section

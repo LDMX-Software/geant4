@@ -327,10 +327,9 @@ void G4EmExtraPhysics::ConstructGammaElectroNuclear()
     gnuc->RegisterMe(lemod);
     cascade->SetMinEnergy(fGNLowEnergyLimit - CLHEP::MeV);
   }
-  // LDMX: Bertini up to 10 GeV and QGS from 8 GeV
-  cascade->SetMaxEnergy(10.*CLHEP::GeV);
+  cascade->SetMaxEnergy(param->GetMaxEnergyTransitionFTF_Cascade());
   gnuc->RegisterMe(cascade);
-  theModel->SetMinEnergy(8.*CLHEP::GeV);
+  theModel->SetMinEnergy(param->GetMinEnergyTransitionFTF_Cascade());
   theModel->SetMaxEnergy(param->GetMaxEnergy());
   gnuc->RegisterMe(theModel);
   

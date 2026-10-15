@@ -88,8 +88,7 @@ G4EmStandardPhysics_option1::G4EmStandardPhysics_option1(G4int ver,
   param->SetDefaults();
   param->SetVerbose(ver);
   param->SetApplyCuts(true);
-  // LDMX: keep gamma processes separate, biasing looks them up by name
-  param->SetGeneralProcessActive(false);
+  param->SetGeneralProcessActive(true);
   // Enable the combined G4TransportationWithMsc, but not the internal stepping.
   param->SetTransportationWithMsc(G4TransportationWithMscType::fEnabled);
   param->SetStepFunction(0.8, 1*CLHEP::mm);
