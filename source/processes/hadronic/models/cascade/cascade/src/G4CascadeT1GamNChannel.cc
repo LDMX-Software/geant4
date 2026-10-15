@@ -33,8 +33,9 @@ using namespace G4InuclParticleNames;
 namespace
 {
 // gamma p : Outgoing particle types of a given multiplicity
-static const G4int gamp2bfs[6][2] = {{gam, pro}, {pi0, pro}, {pip, neu},
-                                     {kpl, lam}, {kpl, s0},  {k0, sp}};
+// Entries 4 and 5 are the N pi backscatter channels, nucleon listed first
+static const G4int gamp2bfs[8][2] = {{gam, pro}, {pi0, pro}, {pip, neu}, {pro, pi0},
+                                     {neu, pip}, {kpl, lam}, {kpl, s0},  {k0, sp}};
 
 static const G4int gamp3bfs[6][3] = {{pip, pro, pim}, {pi0, pro, pi0}, {pip, neu, pi0},
                                      {kpl, pro, kmi}, {k0, pro, k0b},  {kpl, neu, k0b}};
@@ -77,8 +78,8 @@ namespace
 // Meson listed first, as for gamma p: the CM angle sampled from the
 // gamma N -> N pi and gamma N -> K Lambda/Sigma distributions is given to the
 // first particle
-static const G4int gamn2bfs[6][2] = {{gam, neu}, {pi0, neu}, {pim, pro},
-                                     {k0, lam},  {k0, s0},   {kpl, sm}};
+static const G4int gamn2bfs[8][2] = {{gam, neu}, {pi0, neu}, {pim, pro}, {neu, pi0},
+                                     {pro, pim}, {k0, lam},  {k0, s0},   {kpl, sm}};
 
 static const G4int gamn3bfs[6][3] = {{neu, pip, pim}, {neu, pi0, pi0}, {pro, pim, pi0},
                                      {neu, k0, k0b},  {neu, kpl, kmi}, {pro, k0, kmi}};
@@ -123,9 +124,9 @@ static const G4double gampTotXSec[30] = {
   0.0002, 0.0723, 0.2327, 0.54,   0.24,   0.19,   0.28,   0.223,  0.18,   0.146,
   0.138,  0.1296, 0.1275, 0.124,  0.122,  0.12,   0.1185, 0.117,  0.115,  0.115};
 
-static const G4double gampCrossSections[48][30] = {
+static const G4double gampCrossSections[50][30] = {
   //
-  // multiplicity 2 (6 channels)
+  // multiplicity 2 (8 channels)
   //
   // gamma p elastic ( = gamma n elastic )
   {0.0002, 0.0002, 0.0002, 0.0002, 0.0002, 0.0002, 0.0002, 0.0002, 0.0002, 0.0002,
@@ -141,6 +142,16 @@ static const G4double gampCrossSections[48][30] = {
   {0.0,    0.0,    0.0,    0.0,    0.0,    0.0,   0.0,    0.0,    0.0,   0.0,
    0.0,    0.062,  0.152,  0.2373, 0.1143, 0.084, 0.0983, 0.0419, 0.015, 0.006,
    0.0035, 0.0022, 0.0014, 0.0007, 0.0003, 0.0,   0.0,    0.0,    0.0,   0.0},
+
+  // p pi0 ( = n pi0 ) backscatter: integral of Anderson 1969 data above 2.4 GeV
+  {0.0,    0.0,    0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+   0.0,    0.0,    0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+   1.5e-4, 6.4e-5, 2.85e-5, 1.2e-5, 5.0e-6, 2.1e-6, 9.6e-7, 3.6e-7, 1.5e-7, 6.4e-8},
+
+  // n pi+ ( = p pi- ) backscatter: integral of Anderson 1969 data above 2.4 GeV
+  {0.0,    0.0,    0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+   0.0,    0.0,    0.0,     0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,
+   1.5e-4, 6.4e-5, 2.85e-5, 1.2e-5, 5.0e-6, 2.1e-6, 9.6e-7, 3.6e-7, 1.5e-7, 6.4e-8},
 
   // L K+ ( = L K0 )
   {0.0, 0.0, 0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0,    0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
