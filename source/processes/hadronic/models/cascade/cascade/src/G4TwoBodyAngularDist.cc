@@ -38,6 +38,7 @@
 #include "G4AutoDelete.hh"
 #include "G4GamP2NPipAngDst.hh"
 #include "G4GamP2PPi0AngDst.hh"
+#include "G4GamP2NucPiBackscatterAngDst.hh"
 #include "G4GammaNuclAngDst.hh"
 #include "G4PP2PPAngDst.hh"
 #include "G4NP2NPAngDst.hh"
@@ -72,6 +73,7 @@ const G4TwoBodyAngularDist* G4TwoBodyAngularDist::GetInstance() {
 
 G4TwoBodyAngularDist::G4TwoBodyAngularDist()
   : gp_npip(new G4GamP2NPipAngDst), gp_ppi0(new G4GamP2PPi0AngDst),
+    gp_npiback(new G4GamP2NucPiBackscatterAngDst),
     ppAngDst(new G4PP2PPAngDst), npAngDst(new G4NP2NPAngDst),
     nnAngDst(new G4NuclNuclAngDst), pi0pAngDst(new G4Pi0P2Pi0PAngDst),
     pipCXAngDst(new G4PimP2Pi0NAngDst), pimpAngDst(new G4PimP2PimPAngDst),
@@ -84,6 +86,7 @@ G4TwoBodyAngularDist::G4TwoBodyAngularDist()
 G4TwoBodyAngularDist::~G4TwoBodyAngularDist() {
   delete gp_npip;
   delete gp_ppi0;
+  delete gp_npiback;
   delete ppAngDst;
   delete nnAngDst;
   delete pi0pAngDst;
@@ -109,6 +112,7 @@ void G4TwoBodyAngularDist::setVerboseLevel(G4int verbose) {
 void G4TwoBodyAngularDist::passVerbose(G4int verbose) {
   if (gp_npip)   gp_npip->setVerboseLevel(verbose);
   if (gp_ppi0)   gp_ppi0->setVerboseLevel(verbose);
+  if (gp_npiback) gp_npiback->setVerboseLevel(verbose);
   if (ppAngDst)  ppAngDst->setVerboseLevel(verbose);
   if (nnAngDst)  nnAngDst->setVerboseLevel(verbose);
   if (pi0pAngDst) pi0pAngDst->setVerboseLevel(verbose);
@@ -133,6 +137,12 @@ G4TwoBodyAngularDist::ChooseDist(G4int is, G4int fs, G4int kw) const {
   if (fs==0 && kw==0) {
     if (is == pro*pro || is == pro*neu || is == neu*neu) return nn3BodyDst;
     else return hn3BodyDst;
+  }
+
+  // LDMX: gamma-nucleon -> nucleon pi backscatter (nucleon listed first)
+  if (kw == -1 && (is == gam*pro || is == gam*neu) &&
+      (fs == pro*pi0 || fs == neu*pip || fs == neu*pi0 || fs == pro*pim)) {
+    return gp_npiback;
   }
 
   // gamma-nucleon -> nucleon pi0
