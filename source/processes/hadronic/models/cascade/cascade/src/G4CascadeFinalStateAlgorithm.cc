@@ -46,6 +46,7 @@
 #include "G4CascadeFinalStateAlgorithm.hh"
 #include "G4CascadeParameters.hh"
 #include "G4InuclElementaryParticle.hh"
+#include "G4InuclParticleNames.hh"
 #include "G4InuclSpecialFunctions.hh"
 #include "G4LorentzConvertor.hh"
 #include "G4MultiBodyMomentumDist.hh"
@@ -60,6 +61,7 @@
 #include <cmath>
 
 using namespace G4InuclSpecialFunctions;
+using namespace G4InuclParticleNames;
 
 // Cut-offs and iteration limits for generation
 
@@ -99,13 +101,13 @@ Configure(G4InuclElementaryParticle* bullet,
   G4int is = bullet->type() * target->type();
   G4int fs = (multiplicity==2) ? particle_kinds[0]*particle_kinds[1] : 0;
 
+  // Save particle types (LDMX: ChooseGenerators needs them)
+  kinds = particle_kinds;
+
   ChooseGenerators(is, fs);
 
   // Save kinematics for use with distributions
   SaveKinematics(bullet, target);
-
-  // Save particle types for use with distributions
-  kinds = particle_kinds;
 }
 
 // Save kinematics for use with generators
@@ -143,6 +145,12 @@ void G4CascadeFinalStateAlgorithm::ChooseGenerators(G4int is, G4int fs) {
 
   if (fs > 0 && multiplicity == 2) {
     G4int kw = (fs==is) ? 1 : 2;
+
+    // LDMX: gamma N -> N pi with the nucleon first is the backscatter channel
+    if ((is == gam*pro || is == gam*neu) &&
+	(kinds[0] == pro || kinds[0] == neu) &&
+	(kinds[1] == pip || kinds[1] == pim || kinds[1] == pi0)) kw = -1;
+
     angDist = G4TwoBodyAngularDist::GetDist(is, fs, kw);
   } else if (multiplicity == 3) {
     angDist = G4TwoBodyAngularDist::GetDist(is);

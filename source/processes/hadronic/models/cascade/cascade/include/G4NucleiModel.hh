@@ -210,6 +210,11 @@ protected:
     return (p2.second > p1.second);
   }
 
+  // LDMX: order interaction candidates by decreasing inverse mean free path
+  static G4bool invSortPartners(const partner& p1, const partner& p2) {
+    return (p2.second < p1.second);
+  }
+
   // Functions used to generate model nuclear structure
   void fillBindingEnergies();
 
@@ -253,6 +258,7 @@ private:
 
   std::vector<G4InuclElementaryParticle> qdeutrons;	// For h+(NN) trials
   std::vector<G4double> acsecs;
+  std::vector<partner> candidates;	// LDMX: (partner, invmfp) for forced particles
     
   std::vector<G4ThreeVector> coordinates;	// for initializeCascad()
   std::vector<G4LorentzVector> momentums;
